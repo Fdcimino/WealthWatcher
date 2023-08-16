@@ -1,0 +1,1 @@
+//TODO make a batch app that will auto get daily balances and transactions. maybe see if it can be added as a cron job to the express app
