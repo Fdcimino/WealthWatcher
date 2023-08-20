@@ -1,19 +1,10 @@
 require("dotenv").config()
 import { AccountBase, Transaction as PlaidTransaction, TransactionsSyncRequest } from 'plaid';
-import { myAppDataSource } from '../config/datasource';
-import { Account } from '../models/account';
-import { AccountSnapshot } from '../models/account_snapshot';
-import { Link } from '../models/link';
-import { User } from '../models/user';
 import { Equal } from 'typeorm';
 import { client } from '../config/plaidClient';
-import { WWTransaction } from '../models/ww_transaction';
+import { myPrismaClient } from '../config/datasource';
+import type { link, account } from '@prisma/client'
 
-const accountRepository = myAppDataSource.getRepository(Account)
-const accountSnapshotRepository = myAppDataSource.getRepository(AccountSnapshot)
-const userRepository = myAppDataSource.getRepository(User)
-const linkRepository = myAppDataSource.getRepository(Link)
-const transactionRepository = myAppDataSource.getRepository(WWTransaction);
 
 export async function getAuthenticatedUser(claims: any) {
 
@@ -21,7 +12,11 @@ export async function getAuthenticatedUser(claims: any) {
         throw new Error('unauthenticated');
     }
 
-    const user = await userRepository.findOneBy({ id: claims.id })
+    const user = await myPrismaClient.user.findUnique({
+            where:{
+                id: claims.id 
+            },
+        })
     if (user == null) {
         throw new Error('unauthenticated');
     }
@@ -36,12 +31,12 @@ export async function getAuthenticatedUserWithLinks(claims: any) {
         throw new Error('unauthenticated');
     }
 
-    const user = await userRepository.findOne({
+    const user = await myPrismaClient.user.findUnique({
         where: { 
             id: claims.id 
         },
-        relations: {
-            links: true
+        include: {
+            link: true,
         }
     })
     console.log(user)
@@ -53,12 +48,18 @@ export async function getAuthenticatedUserWithLinks(claims: any) {
     return user;
 }
 
-export function createAccountSnapshot(accounts: AccountBase[], link: Link) {
-    //TODO: add a try catch and throw error if there is one
+export function createAccountSnapshot(accounts: AccountBase[], link: link) {
+
     accounts.forEach(async (accountData) => {
-        var account = await accountRepository.findOneBy({ accountId: accountData.account_id, link: Equal(link.id) })
+        var account = await myPrismaClient.account.findFirst({
+            where: {
+                accountId: accountData.account_id, 
+                link: link,
+            }
+        })
+
         if (account == null) {
-            account = new Account()
+            newAccount = 
             account.accountId = accountData.account_id
             account.link = link
             account.mask = accountData.mask || "";
