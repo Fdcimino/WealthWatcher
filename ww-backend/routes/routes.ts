@@ -1,21 +1,13 @@
 require("dotenv").config()
 import { Request, Response } from 'express';
 import { CountryCode, ItemPublicTokenExchangeRequest, Products } from 'plaid';
-import { User } from '../models/user';
-import { myAppDataSource } from '../config/datasource';
-import { Link } from '../models/link';
 import {client} from '../config/plaidClient';
 import { createAccountSnapshot, getAccounts, getAccountsCurrentBalance, getAuthenticatedUser, getAuthenticatedUserWithLinks, getAllTransactionsForUser, getTransactionSync } from '../service/service';
 
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { AccountSnapshot } from '../models/account_snapshot';
 
 const router = require('express').Router()
-
-const userRepository = myAppDataSource.getRepository(User)
-const linkRepository = myAppDataSource.getRepository(Link)
-const accountSnapshotRepository = myAppDataSource.getRepository(AccountSnapshot)
 
 const JWT_SECRET = process.env.JWT_SECRET || "SECRET"
 
