@@ -1,21 +1,15 @@
 require("dotenv").config()
 import { Request, Response } from 'express';
 import { CountryCode, ItemPublicTokenExchangeRequest, Products } from 'plaid';
-import { User } from '../models/user';
-import { myAppDataSource } from '../config/datasource';
-import { Link } from '../models/link';
 import {client} from '../config/plaidClient';
 import { createAccountSnapshot, getAccounts, getAccountsCurrentBalance, getAuthenticatedUser, getAuthenticatedUserWithLinks, getAllTransactionsForUser, getTransactionSync } from '../service/service';
+import { myPrismaClient } from '../config/datasource';
+import { Prisma } from '@prisma/client'
 
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { AccountSnapshot } from '../models/account_snapshot';
 
 const router = require('express').Router()
-
-const userRepository = myAppDataSource.getRepository(User)
-const linkRepository = myAppDataSource.getRepository(Link)
-const accountSnapshotRepository = myAppDataSource.getRepository(AccountSnapshot)
 
 const JWT_SECRET = process.env.JWT_SECRET || "SECRET"
 
@@ -25,13 +19,15 @@ router.post('/register', async (req: Request, res: Response) => {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(req.body.password, salt)
 
-    const user = new User()
-    user.username = req.body.username
-    user.password = hashedPassword
-    user.firstName = req.body.name
-    user.lastName = req.body.name
-
-    const result = await userRepository.save(user)
+    let newUser: Prisma.ww_userCreateInput
+    newUser = {
+        username: req.body.username,
+        password: hashedPassword,
+        firstName: req.body.name,
+        lastName: req.body.name,
+    }
+   
+    const result = await myPrismaClient.ww_user.create({data: newUser})
 
     const { password, ...data } = result
 
@@ -40,7 +36,11 @@ router.post('/register', async (req: Request, res: Response) => {
 
 //Login a user
 router.post('/login', async (req: Request, res: Response) => {
-    const user = await userRepository.findOneBy({ username: req.body.username })
+    const user = await myPrismaClient.ww_user.findFirst({
+        where: {
+            username: req.body.username
+        }
+    })
 
     if (!user) {
         return res.status(404).send({
@@ -137,14 +137,19 @@ router.post('/setup_link', async function (req: Request, res: Response) {
         };
         const createTokenResponse = await client.itemPublicTokenExchange(request);
 
-        const link = new Link()
-        link.user = user
-        link.orgName = "test";
-        link.accessToken = createTokenResponse.data.access_token
-        link.name = createTokenResponse.data.item_id
+        let newLink: Prisma.ww_linkCreateInput
+        newLink = {
+            user: {
+                connect:{
+                    id: user.id
+                }
+            },
+            orgName: "test",
+            accessToken: createTokenResponse.data.access_token,
+            name: createTokenResponse.data.item_id,
+        }
 
-        await linkRepository.save(link)
-        
+        let link = await myPrismaClient.ww_link.create({data: newLink})
 
         const balanceRequest = {
             access_token: link.accessToken
@@ -234,7 +239,11 @@ router.get('/accounts/snaphots', async function (req: Request, res: Response) {
         earliestDate.setDate(earliestDate.getDate() - 30)
 
         for(let account of accounts){
-            let snapshots = await accountSnapshotRepository.findBy({account: account})
+            let snapshots = await myPrismaClient.ww_account_snapshot.findMany({
+                where: {
+                    accountId: account.id
+                }
+            })
             snapshots.filter(snapshot => snapshot.date > earliestDate)
             let accountWithSnapshots= {
                 account: account,
