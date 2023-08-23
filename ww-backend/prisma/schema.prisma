@@ -8,53 +8,54 @@ datasource db {
 }
 
 model ww_account {
-  id               Int                 @id(map: "PK_54115ee388cdb6d86bb4bf5b2ea") @default(autoincrement())
-  accountId        String              @db.VarChar
-  mask             String              @db.VarChar
-  name             String?             @db.VarChar
-  type             String              @db.VarChar
-  subtype          String              @db.VarChar
-  linkId           Int?
-  link             ww_link?            @relation(fields: [linkId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_0fb42c0c0195d48963b006de6ff")
-  account_snapshot account_snapshot[]
-  owned_security   ww_owned_security[]
-  ww_transaction   ww_transaction[]
+  id                Int                   @id @default(autoincrement())
+  accountId         String                @unique @db.VarChar
+  mask              String                @db.VarChar
+  name              String?               @db.VarChar
+  type              String                @db.VarChar
+  subtype           String                @db.VarChar
+  linkId            Int
+  link              ww_link               @relation(fields: [linkId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  account_snapshots ww_account_snapshot[]
+  owned_securitys   ww_owned_security[]
+  transactions   ww_transaction[]
 
-  @@index([accountId], map: "IDX_b1a9fdd281787a66a213f5b725")
+  @@index([accountId])
 }
 
-model account_snapshot {
-  id        Int         @id(map: "PK_3296654a614882b571b225c84e3") @default(autoincrement())
+model ww_account_snapshot {
+  id        Int         @id @default(autoincrement())
   balance   Decimal     @db.Decimal(6, 2)
   date      DateTime    @db.Timestamp(6)
   accountId Int?
-  account   ww_account? @relation(fields: [accountId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_b460e5fd11eab0ee0fbd3b23d83")
+  account   ww_account? @relation(fields: [accountId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model ww_link {
-  id                Int          @id(map: "PK_26206fb7186da72fbb9eaa3fac9") @default(autoincrement())
+  id                Int          @id @default(autoincrement())
   orgName           String       @db.VarChar
   name              String       @db.VarChar
   accessToken       String       @db.VarChar
   transactionCursor String?      @db.VarChar
   userId            Int?
-  account           ww_account[]
-  user              ww_user?     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_14a562b14bb83fc8ba73d30d3e0")
+  accounts          ww_account[]
+  user              ww_user?     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
+//TODO: need to do a spike on the plaid securities feature
 model ww_owned_security {
-  id           Int         @id(map: "PK_a2e69fbd979c55f4b498ac2f7c4") @default(autoincrement())
+  id           Int         @id @default(autoincrement())
   symbol       String      @db.VarChar
   quantity     Int
   boughtAt     Int
   boughtAtDate DateTime    @db.Timestamp(6)
   accountId    Int?
-  account      ww_account? @relation(fields: [accountId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ac29400a64f1d8c5c85e0a791c4")
+  account      ww_account? @relation(fields: [accountId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model ww_user {
-  id            Int                @id(map: "PK_cace4a159ff9f2512dd42373760") @default(autoincrement())
-  username      String             @unique(map: "UQ_78a916df40e02a9deb1c4b75edb") @db.VarChar
+  id            Int                @id @default(autoincrement())
+  username      String             @unique @db.VarChar
   password      String             @db.VarChar
   firstName     String?            @db.VarChar
   lastName      String?            @db.VarChar
@@ -64,18 +65,18 @@ model ww_user {
 }
 
 model ww_transaction {
-  id               Int        @id(map: "PK_5a5232f1b108d9c3e6ca0829aa2") @default(autoincrement())
+  id               Int        @id @default(autoincrement())
   accountId        Int
-  transactionId    String     @db.VarChar
+  transactionId    String     @unique @db.VarChar
   amount           Decimal    @db.Decimal(5, 2)
   currencyCode     String?    @db.VarChar
-  detailedCategory String     @db.VarChar
-  primaryCategory  String     @db.VarChar
+  detailedCategory String?    @db.VarChar
+  primaryCategory  String?    @db.VarChar
   name             String?    @db.VarChar
   merchantName     String?    @db.VarChar
   paymentChannel   String     @db.VarChar
   datetime         DateTime   @db.Timestamp(6)
-  account          ww_account @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_a1d87d90f4104cd0d1d1754a0b7")
+  account          ww_account @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   userCategories   String[]   @db.VarChar(200)
 }
 
@@ -89,6 +90,7 @@ model ww_budget {
 model ww_budget_category {
   id         Int       @id @default(autoincrement())
   budgetId   Int
+  name       String
   limit      Decimal   @db.Decimal(5, 2)
   budget     ww_budget @relation(fields: [budgetId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   categories String[]  @db.VarChar(200)

@@ -1,5 +1,5 @@
 
-import { Equal } from "typeorm"
+/* import { Equal } from "typeorm"
 import { myAppDataSource } from "./config/datasource.js"
 import { Account } from "./models/account.js"
 import { AccountSnapshot } from "./models/account_snapshot.js"
@@ -59,3 +59,4 @@ while(!myAppDataSource.isInitialized){
 } 
 createAShitTonOfSnapShots("test2", 50)
 
+*/
