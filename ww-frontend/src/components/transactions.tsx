@@ -5,15 +5,27 @@ import { Transaction } from "@/app/page";
 const initialTransactions: Transaction[] = [];
 
 export default function Transactions({ transactions = initialTransactions }) {
+
+
+  function formatTime(stringDate: string){
+
+    const date = new Date(stringDate)
+
+    //return `${date.getHours()}:${date.getMinutes()} ${date.getMonth()}-${date.getDay()}-${date.getFullYear()}`
+    return `${date.toLocaleTimeString()} ${date.toLocaleDateString()}`
+  }
+
   return (
     <ScrollArea.Root className="w-auto h-[300px] rounded overflow-hidden bg-white mt-2">
       <ScrollArea.Viewport className="w-full h-full rounded">
         <div className="px-5">
           {transactions.map((transaction) => (
             <div
-              className="text-mauve12 text-[13px] leading-[18px] mt-2.5 pt-2.5 bg-slate-400 rounded-md pb-2.5 text-center grid grid-cols-5"
+              className="text-mauve12 text-[13px] leading-[18px] mt-2.5 pt-2.5 bg-slate-200 rounded-md pb-2.5 text-center grid grid-cols-5"
               key={transaction.transactionId}>
               <p className="col-span-1 col-start-1 ">{transaction.merchantName}</p>
+              <p className="col-span-1 col-start-2">{transaction.detailedCategory}</p>
+              <p className="col-span-1 col-start-4 ">{formatTime(transaction.datetime)}</p>
               <p className={`col-span-1 col-start-5 pr-5 text-right ${transaction.amount < 0 ? "text-green-700": "text-red-700"}`}>{transaction.amount < 0 ? transaction.amount * -1 : transaction.amount}</p>
             </div>
           ))}

@@ -1,6 +1,6 @@
 require("dotenv").config()
 import { Request, Response } from 'express';
-import { CountryCode, ItemPublicTokenExchangeRequest, Products } from 'plaid';
+import { CountryCode, CreditAccountSubtype, DepositoryAccountSubtype, ItemPublicTokenExchangeRequest, LinkTokenCreateRequest, Products } from 'plaid';
 import {client} from '../config/plaidClient';
 import { createAccountSnapshot, getAccounts, getAccountsCurrentBalance, getAuthenticatedUser, getAuthenticatedUserWithLinks, getAllTransactionsForUser, getTransactionSync } from '../service/service';
 import { myPrismaClient } from '../config/datasource';
@@ -106,13 +106,13 @@ router.post('/create_link_token', async function (req: Request, res: Response) {
 
 
     const clientUserId = user.id.toString();
-    const request = {
+    const request: LinkTokenCreateRequest = {
         user: {
             // This should correspond to a unique id for the current user.
             client_user_id: clientUserId,
         },
         client_name: 'Plaid Test App',
-        products: [Products.Auth, Products.Transactions],
+        products: [Products.Auth, Products.Transactions, Products.Investments],
         language: 'en',
         redirect_uri: 'http://localhost:3030/account',
         country_codes: [CountryCode.Us],
@@ -272,8 +272,8 @@ router.get('/transactions',async (req: Request, res: Response) => {
         const claims = jwt.verify(req.cookies.jwt, JWT_SECRET);
 
         let user = await getAuthenticatedUserWithLinks(claims)
+        console.log("REQUEST PARAMS " + JSON.stringify(req.query));
         let transactions = await getAllTransactionsForUser(user)
-        
         res.send(transactions)
 
     }catch(error){

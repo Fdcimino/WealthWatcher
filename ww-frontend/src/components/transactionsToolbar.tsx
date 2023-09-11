@@ -1,83 +1,66 @@
-import React from 'react';
-import * as Toolbar from '@radix-ui/react-toolbar';
-import {
-    StrikethroughIcon,
-    TextAlignLeftIcon,
-    TextAlignCenterIcon,
-    TextAlignRightIcon,
-    FontBoldIcon,
-    FontItalicIcon,
-} from '@radix-ui/react-icons';
+import React, { Dispatch, SetStateAction, useEffect } from "react";
+import * as Toolbar from "@radix-ui/react-toolbar";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { CheckCircledIcon, DividerHorizontalIcon } from "@radix-ui/react-icons";
+import { Account } from "@/app/page";
+import { filter } from "d3";
 
-export default function TransactionToolBar() {
+export type TransactionFilter = {
+  accounts: FilterAccount[];
+  startDate: Date | undefined;
+  endDate: Date | undefined;
+};
 
-    return (
-        <Toolbar.Root
-            className="flex p-[10px] w-full min-w-max rounded-md bg-white "
-            aria-label="Formatting options"
-        >
-            <Toolbar.ToggleGroup type="multiple" aria-label="Text formatting">
-                <Toolbar.ToggleItem
-                    className="flex-shrink-0 flex-grow-0 basis-auto text-mauve11 h-[25px] px-[5px] rounded inline-flex text-[13px] leading-none items-center justify-center bg-white ml-0.5 outline-none hover:bg-violet3 hover:text-violet11 focus:relative focus:shadow-[0_0_0_2px] focus:shadow-violet7 first:ml-0 data-[state=on]:bg-violet5 data-[state=on]:text-violet11"
-                    value="bold"
-                    aria-label="Bold"
-                >
-                    <FontBoldIcon />
-                </Toolbar.ToggleItem>
-                <Toolbar.ToggleItem
-                    className="flex-shrink-0 flex-grow-0 basis-auto text-mauve11 h-[25px] px-[5px] rounded inline-flex text-[13px] leading-none items-center justify-center bg-white ml-0.5 outline-none hover:bg-violet3 hover:text-violet11 focus:relative focus:shadow-[0_0_0_2px] focus:shadow-violet7 first:ml-0 data-[state=on]:bg-violet5 data-[state=on]:text-violet11"
-                    value="italic"
-                    aria-label="Italic"
-                >
-                    <FontItalicIcon />
-                </Toolbar.ToggleItem>
-                <Toolbar.ToggleItem
-                    className="flex-shrink-0 flex-grow-0 basis-auto text-mauve11 h-[25px] px-[5px] rounded inline-flex text-[13px] leading-none items-center justify-center bg-white ml-0.5 outline-none hover:bg-violet3 hover:text-violet11 focus:relative focus:shadow-[0_0_0_2px] focus:shadow-violet7 first:ml-0 data-[state=on]:bg-violet5 data-[state=on]:text-violet11"
-                    value="strikethrough"
-                    aria-label="Strike through"
-                >
-                    <StrikethroughIcon />
-                </Toolbar.ToggleItem>
-            </Toolbar.ToggleGroup>
-            <Toolbar.Separator className="w-[1px] bg-mauve6 mx-[10px]" />
-            <Toolbar.ToggleGroup type="single" defaultValue="center" aria-label="Text alignment">
-                <Toolbar.ToggleItem
-                    className="flex-shrink-0 flex-grow-0 basis-auto text-mauve11 h-[25px] px-[5px] rounded inline-flex text-[13px] leading-none items-center justify-center bg-white ml-0.5 outline-none hover:bg-violet3 hover:text-violet11 focus:relative focus:shadow-[0_0_0_2px] focus:shadow-violet7 first:ml-0 data-[state=on]:bg-violet5 data-[state=on]:text-violet11"
-                    value="left"
-                    aria-label="Left aligned"
-                >
-                    <TextAlignLeftIcon />
-                </Toolbar.ToggleItem>
-                <Toolbar.ToggleItem
-                    className="flex-shrink-0 flex-grow-0 basis-auto text-mauve11 h-[25px] px-[5px] rounded inline-flex text-[13px] leading-none items-center justify-center bg-white ml-0.5 outline-none hover:bg-violet3 hover:text-violet11 focus:relative focus:shadow-[0_0_0_2px] focus:shadow-violet7 first:ml-0 data-[state=on]:bg-violet5 data-[state=on]:text-violet11"
-                    value="center"
-                    aria-label="Center aligned"
-                >
-                    <TextAlignCenterIcon />
-                </Toolbar.ToggleItem>
-                <Toolbar.ToggleItem
-                    className="flex-shrink-0 flex-grow-0 basis-auto text-mauve11 h-[25px] px-[5px] rounded inline-flex text-[13px] leading-none items-center justify-center bg-white ml-0.5 outline-none hover:bg-violet3 hover:text-violet11 focus:relative focus:shadow-[0_0_0_2px] focus:shadow-violet7 first:ml-0 data-[state=on]:bg-violet5 data-[state=on]:text-violet11"
-                    value="right"
-                    aria-label="Right aligned"
-                >
-                    <TextAlignRightIcon />
-                </Toolbar.ToggleItem>
-            </Toolbar.ToggleGroup>
-            <Toolbar.Separator className="w-[1px] bg-mauve6 mx-[10px]" />
-            <Toolbar.Link
-                className="bg-transparent text-mauve11 inline-flex justify-center items-center hover:bg-transparent hover:cursor-pointer flex-shrink-0 flex-grow-0 basis-auto h-[25px] px-[5px] rounded text-[13px] leading-none bg-white ml-0.5 outline-none hover:bg-violet3 hover:text-violet11 focus:relative focus:shadow-[0_0_0_2px] focus:shadow-violet7 first:ml-0 data-[state=on]:bg-violet5 data-[state=on]:text-violet11"
-                href="#"
-                target="_blank"
-                style={{ marginRight: 10 }}
-            >
-                Edited 2 hours ago
-            </Toolbar.Link>
-            <Toolbar.Button
-                className="px-[10px] text-white bg-violet9 flex-shrink-0 flex-grow-0 basis-auto h-[25px] rounded inline-flex text-[13px] leading-none items-center justify-center outline-none hover:bg-violet10 focus:relative focus:shadow-[0_0_0_2px] focus:shadow-violet7"
-                style={{ marginLeft: 'auto' }}
-            >
-                Share
-            </Toolbar.Button>
-        </Toolbar.Root>
-    )
+export class FilterAccount {
+  account: Account;
+  included: boolean;
+  
+  constructor(account: Account) {
+    this.account = account;
+    this.included = true;
+  }
+
+}
+
+interface TransactionProps {
+  filters: TransactionFilter;
+  updateFilters: Dispatch<SetStateAction<TransactionFilter>>;
+}
+
+export default function TransactionToolBar({
+  filters,
+  updateFilters,
+}: TransactionProps) {
+
+  function onAccountCheck(index: number){
+    const newAccountFilters = [...filters.accounts]
+    newAccountFilters[index].included = !filters.accounts[index].included;
+    updateFilters({...filters, accounts: newAccountFilters})
+  }
+
+  return (
+    <Toolbar.Root
+      className="flex p-[10px] w-full min-w-max rounded-md bg-white "
+      aria-label="Formatting options">
+      <DropdownMenu.Root>
+        <Toolbar.Button asChild>
+          <DropdownMenu.Trigger>Accounts</DropdownMenu.Trigger>
+        </Toolbar.Button>
+        <DropdownMenu.Content className="z-50 p-2 rounded-md bg-slate-400">
+          {filters.accounts.map((account, index) => (
+            <DropdownMenu.CheckboxItem
+              className="text-[13px] leading-none text-violet11 rounded-[3px] flex items-center h-[25px] px-[5px] relative pl-[25px] select-none outline-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1"
+              checked={account.included}
+              onClick={() => {onAccountCheck(index)}}
+              key={index}>
+              <DropdownMenu.ItemIndicator className="absolute left-0 w-[25px] inline-flex items-center justify-center">
+                {account.included ? <CheckCircledIcon /> : <DividerHorizontalIcon />}
+              </DropdownMenu.ItemIndicator>
+              {account.account.mask}
+            </DropdownMenu.CheckboxItem>
+          ))}
+        </DropdownMenu.Content>
+      </DropdownMenu.Root>
+    </Toolbar.Root>
+  );
 }

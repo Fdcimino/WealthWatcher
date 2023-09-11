@@ -18,7 +18,7 @@ model ww_account {
   link              ww_link               @relation(fields: [linkId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   account_snapshots ww_account_snapshot[]
   owned_securitys   ww_owned_security[]
-  transactions   ww_transaction[]
+  transactions      ww_transaction[]
 
   @@index([accountId])
 }
@@ -78,12 +78,17 @@ model ww_transaction {
   datetime         DateTime   @db.Timestamp(6)
   account          ww_account @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   userCategories   String[]   @db.VarChar(200)
+
+  @@index([transactionId])
 }
 
 model ww_budget {
   id         Int                  @id @default(autoincrement())
   userId     Int?
   user       ww_user?             @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  default    Boolean              @default(false)
+  period     String               @default("monthy") //period of time the budget is over defaults to monthly
+  startDay   Int                  @default(1)
   categories ww_budget_category[]
 }
 

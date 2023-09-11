@@ -4,12 +4,10 @@ import {
   Transaction as PlaidTransaction,
   TransactionsSyncRequest,
 } from "plaid";
-import { Equal } from "typeorm";
 import { client } from "../config/plaidClient";
 import { myPrismaClient } from "../config/datasource";
 import { Prisma, ww_account, ww_link, ww_transaction, ww_user } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
-import { connect } from "http2";
 
 const userWithLinks = Prisma.validator<Prisma.ww_userDefaultArgs>()({
   include: { links: true },
@@ -116,10 +114,7 @@ export async function getAccounts(userData: ww_UserWithLinks) {
     linkAccounts.forEach((linkedAcc) => {
       accounts.push(linkedAcc);
     });
-    console.log("linked Accounts: " + linkAccounts);
   }
-
-  console.log("accounts: " + accounts);
 
   return accounts;
 }
@@ -215,8 +210,6 @@ async function plaidTransactionToWWTransaction(
     },
   });
 
-  console.log(plaidTransaction);
-
   let updatedTransaction: Prisma.ww_transactionCreateInput;
   updatedTransaction = {
     account: {
@@ -261,9 +254,8 @@ export async function getAllTransactionsForUser(
         transactions: true,
       },
     });
-    transactions = transactions.concat(
+    transactions = transactions.concat( 
       accounts.flatMap((account) => {
-        console.log(account.transactions);
         return account.transactions;
       })
     );
